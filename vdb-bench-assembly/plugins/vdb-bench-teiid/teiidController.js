@@ -45,6 +45,13 @@
                 template: config.pluginDir + syntax.FORWARD_SLASH +
                                     pluginDirName + syntax.FORWARD_SLASH +
                                     'data-sources.html'
+            },
+            'preview-query': {
+                id: 'preview-query',
+                title: 'Preview Query',
+                template: config.pluginDir + syntax.FORWARD_SLASH +
+                                    pluginDirName + syntax.FORWARD_SLASH +
+                                    'preview-query.html'
             }
         };
 
