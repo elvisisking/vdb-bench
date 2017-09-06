@@ -21,7 +21,11 @@ var gulp = require('gulp'),
     s = require('underscore.string'),
     hawtio = require('hawtio-node-backend'),
     childProc = require('child_process'),
-    logger = require('js-logger')
+    logger = require('js-logger'),
+    tsc = require('gulp-typescript'),
+    tslint = require('gulp-tslint'),
+    sourcemaps = require('gulp-sourcemaps'),
+    tsProject = tsc.createProject('tsconfig.json')
 
 // Load all the gulp plugins
 var plugins = gulpLoadPlugins({});
@@ -36,6 +40,7 @@ var config = {
         name: 'app',
         root: 'app/',
         js: 'app/**/*.js',
+        ts: 'app/**/*.ts',
         less: 'app/**/content/**/*.less',
         html: ['app/**/*.html'],
         templateModule: pkg.name + '-app-templates',
@@ -44,10 +49,12 @@ var config = {
         name: 'plugins',
         root: 'plugins/',
         js: 'plugins/**/*.js',
+        ts: 'plugins/**/*.ts',
         less: 'plugins/**/content/**/*.less',
         html: ['plugins/**/*.html'],
         templateModule: pkg.name + '-templates',
     },
+    tsOutputPath: 'gen/',
     css: 'styles.css',
     libFiles: 'libs/**/*.{png,gif,jpg,svg,woff,woff2,eot,ttf,otf,css}',
     releaseDest: 'target/site'
@@ -78,6 +85,52 @@ gulp.task('jshint', function () {
         .pipe(jshint())
         .pipe(jshint.reporter('jshint-stylish'));
 });
+
+
+/**
+ * Lint all custom TypeScript files.
+ */
+gulp.task('ts-lint', function () {
+    return gulp.src([config.app.ts,config.plugins.ts]).pipe(tslint()).pipe(tslint.report('prose'));
+});
+
+/**
+ * Compile TypeScript and include references to library and app .d.ts files.
+ */
+gulp.task('compile-ts', function () {
+    var sourceTsFiles = [config.app.ts,                        //paths to source typescript files
+    	                 config.plugins.ts]; //reference to library .d.ts files
+                        
+
+    var tsResult = gulp.src(sourceTsFiles)
+                       .pipe(sourcemaps.init())
+                       .pipe(tsc(tsProject));
+
+        tsResult.dts.pipe(gulp.dest(config.tsOutputPath));
+        return tsResult.js
+                        .pipe(sourcemaps.write('.'))
+                        .pipe(gulp.dest(config.tsOutputPath));
+});
+
+/**
+ * Remove all generated JavaScript files from TypeScript compilation.
+ */
+gulp.task('clean-ts', function (cb) {
+  var typeScriptGenFiles = [
+                              config.tsOutputPath +'/**/*.js',    // path to all JS files auto gen'd by editor
+                              config.tsOutputPath +'/**/*.js.map', // path to all sourcemap files auto gen'd by editor
+                              '!' + config.tsOutputPath + '/lib'
+                           ];
+
+  // delete the files
+  del(typeScriptGenFiles, cb);
+});
+
+
+
+
+
+
 
 /*
  * Task that finds all .less files and converts
@@ -134,15 +187,17 @@ gulp.task('app-templates', function () {
 gulp.task('watch', ['build'], function () {
     plugins.watch(['libs/**/*.{js, css}', 'index.html',
                             config.app.root + '**/*.js',
+                            config.app.root + '**/*.ts',
                             config.app.root + '**/*.html',
                             config.app.root + '**/*.less',
                             config.plugins.root + '**/*.js',
+                            config.plugins.root + '**/*.ts',
                             config.plugins.root + '**/*.less',
                             config.plugins.root + '**/*.html',
                             '!' + config.plugins.root + config.plugins.templateModule + '.js',
                             '!' + config.app.root + config.app.templateModule + '.js'
                          ], function () {
-                            gulp.start('reload', ['jshint', 'less', 'plugin-templates', 'app-templates']);
+                            gulp.start('reload', ['ts-lint', 'compile-ts', 'jshint', 'less', 'plugin-templates', 'app-templates']);
                          });
 });
 
@@ -281,7 +336,7 @@ gulp.task('mvn', ['build', 'site']);
 /*
  * Task to build the project
  */
-gulp.task('build', ['bower', 'jshint', 'less', 'app-templates', 'plugin-templates']);
+gulp.task('build', ['bower', 'ts-lint', 'compile-ts', 'jshint', 'less', 'app-templates', 'plugin-templates']);
 
 /*
  * Task to build, launch the Rest test server and
