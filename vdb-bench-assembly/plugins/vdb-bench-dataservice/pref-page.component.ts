@@ -16,15 +16,6 @@ export class PrefPageComponent {
         let panels = preferencesRegistry.getTabs();
         this.names = sortNames(_.keys(this.panels));
 
-		this.$scope.$watch(
-		    (): string => {
-		        return this.primaryValue;
-		    },
-		    (newValue: string, oldValue: string):void => {
-		        console.log("the value ", oldValue, " got replaced with ", newValue);
-		    }
-		);
-
 	    //
 	    // Select the first tab in the list-style
 	    //
@@ -32,7 +23,7 @@ export class PrefPageComponent {
 	        setPanel(this.names[0]);
 	    }
     }
-    
+
     exitPreferences() {
         this.$scope.vmmain.selectPage(this.$scope.vmmain.previousPageId());
     }
@@ -66,9 +57,7 @@ export class PrefPageComponent {
      * @returns {any} the sorted names
      */
     sortNames(names) {
-        return names.sort(function (a, b) {
-            return a.localeCompare(b);
-        });
+    	return names.sort( ( a, b ) => 0 - ( a.localeCompare( b ) ? 1 : -1 ) );
     }
 
 }

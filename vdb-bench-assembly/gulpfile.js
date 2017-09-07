@@ -98,8 +98,8 @@ gulp.task('ts-lint', function () {
  * Compile TypeScript and include references to library and app .d.ts files.
  */
 gulp.task('compile-ts', function () {
-    var sourceTsFiles = [config.app.ts,                        //paths to source typescript files
-    	                 config.plugins.ts]; //reference to library .d.ts files
+    var sourceTsFiles = [config.app.ts,      //paths to source typescript files
+    	                 config.plugins.ts]; // TODO add reference to library .d.ts files
                         
 
     var tsResult = gulp.src(sourceTsFiles)
@@ -187,18 +187,20 @@ gulp.task('app-templates', function () {
 gulp.task('watch', ['build'], function () {
     plugins.watch(['libs/**/*.{js, css}', 'index.html',
                             config.app.root + '**/*.js',
-                            config.app.root + '**/*.ts',
                             config.app.root + '**/*.html',
                             config.app.root + '**/*.less',
                             config.plugins.root + '**/*.js',
-                            config.plugins.root + '**/*.ts',
                             config.plugins.root + '**/*.less',
                             config.plugins.root + '**/*.html',
                             '!' + config.plugins.root + config.plugins.templateModule + '.js',
                             '!' + config.app.root + config.app.templateModule + '.js'
                          ], function () {
-                            gulp.start('reload', ['ts-lint', 'compile-ts', 'jshint', 'less', 'plugin-templates', 'app-templates']);
+                            gulp.start('reload', ['jshint', 'less', 'plugin-templates', 'app-templates']);
                          });
+});
+
+gulp.task('watch-ts', function() {
+    gulp.watch([config.plugins.ts], ['ts-lint', 'compile-ts']);
 });
 
 /*
@@ -206,7 +208,7 @@ gulp.task('watch', ['build'], function () {
  * server that serves out the project's source
  * for testing and developing.
  */
-gulp.task('connect', ['watch'], function () {
+gulp.task('connect', ['watch','watch-ts'], function () {
     hawtio.setConfig({
         logLevel: logger.DEBUG,
         port: 2772,
