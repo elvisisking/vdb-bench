@@ -44,7 +44,7 @@
          */
         function sortNames(names) {
             return names.sort(function (a, b) {
-                return b.localeCompare(a);
+                return a.localeCompare(b);
             });
         }
         //

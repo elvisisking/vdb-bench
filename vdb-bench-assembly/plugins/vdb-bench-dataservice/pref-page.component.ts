@@ -1,0 +1,74 @@
+@Component({
+    selector: 'pref-page',
+    templateUrl: 'pref-page.component.html',
+    styleUrls: ['pref-page.component.css']
+})
+export class PrefPageComponent {
+
+	private names: string[];
+	private pref: string;
+	private $scope: IUserControllerScope;
+
+    constructor( $scope: IUserControllerScope,
+                 preferencesRegistry: PreferencesRegistry ) {
+        this.$scope = $scope;
+        
+        let panels = preferencesRegistry.getTabs();
+        this.names = sortNames(_.keys(this.panels));
+
+		this.$scope.$watch(
+		    (): string => {
+		        return this.primaryValue;
+		    },
+		    (newValue: string, oldValue: string):void => {
+		        console.log("the value ", oldValue, " got replaced with ", newValue);
+		    }
+		);
+
+	    //
+	    // Select the first tab in the list-style
+	    //
+	    if (! _.isEmpty(this.names)) {
+	        setPanel(this.names[0]);
+	    }
+    }
+    
+    exitPreferences() {
+        this.$scope.vmmain.selectPage(this.$scope.vmmain.previousPageId());
+    }
+
+    setPanel(name) {
+        this.pref = name;
+    }
+
+    hasPanel() {
+        return ! _.isEmpty(this.pref);
+    }
+
+    active(name) {
+        if (name === this.pref) {
+            return 'active';
+        }
+        return '';
+    }
+
+    getPrefs(pref) {
+        let panel = this.panels[pref];
+        if (panel) {
+            return panel.template;
+        }
+        return undefined;
+    }
+
+    /**
+     * Sort the preference by names (and ensure Reset is last).
+     * @param names  the names
+     * @returns {any} the sorted names
+     */
+    sortNames(names) {
+        return names.sort(function (a, b) {
+            return a.localeCompare(b);
+        });
+    }
+
+}
